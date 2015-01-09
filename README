@@ -1,0 +1,115 @@
+
+Original source came from
+
+http://www.xs4all.nl/~hanwen/public/software/gendep-0.1.tar.gz
+
+on
+
+http://www.xs4all.nl/~hanwen/public/software/README.html
+
+by Han-Wen Nienhuys under GPL.
+
+Minor changes made by Christopher Lester to make it compile with 
+
+[lester@localhost gendep-0.1]$ gcc --version
+gcc (GCC) 4.1.1 20070105 (Red Hat 4.1.1-51)
+Copyright (C) 2006 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+[lester@localhost gendep-0.1]$ cat /etc/issue
+Fedora Core release 6 (Zod)
+Kernel \r on an \m
+
+[lester@localhost gendep-0.1]$ uname -a
+Linux localhost.localdomain 2.6.20-1.2933.fc6 #1 SMP Mon Mar 19 11:38:26 EDT 2007 i686 i686 i386 GNU/Linux
+
+
+----------------------
+
+Basic changes amount to telling the test part of the makefile that the binary which it should be snooping for inclusions is called "cc1" now, not "cpp".  Also one of the headers seems to be called "syscall.h" now not "syscall-list.h".
+
+---------------------
+
+How it works
+
+The idea is that a library is created that can intercept calls to open() made by a specified progam (determined by environment variable GENDEP_BINARY), and then inspect the opened files to see if they match a set of regexps (determined by environment variables GENDEP_XXX, where XXX is a value of GENDEP_BINARY) and if they do matchm, these filenames are recorded in a dependency file suitable for reading by gnu make.  The target file is controlled by environment variable GENDEP_TARGET.  To get the library that intercepts calls to open loaded, it is necessary to use a preload mechanism such as that controlled by the LD_PRELOAD environment variable in many versions of linux.
+
+If all that is very confusing, download the source code, build the library with "make" and then type "make test" to run an example which will compile an example program "simple-cat.c" and output dependency information twice.  Here is the test target of the makefile:
+
+
+test:
+        GENDEP_TARGET='simple-cat' \
+                GENDEP_BINARY=cc1\
+                GENDEP_cc1='+\.h$$ -^/usr' \
+                LD_PRELOAD=$(shell pwd)/libgendep.so\
+                gcc -o simple-cat simple-cat.c
+        GENDEP_TARGET='badexp' \
+                GENDEP_BINARY=cc1\
+                GENDEP_cc1='\)foo'\
+                LD_PRELOAD=$(shell pwd)/libgendep.so\
+                gcc -o simple-cat simple-cat.c
+        @echo ====================
+        @echo == simple-cat.dep ==
+        cat simple-cat.dep
+        @echo ================
+        @echo == badexp.dep ==
+        cat badexp.dep
+        @echo ================
+
+You should see output similar to the following:
+
+====================
+== simple-cat.dep ==
+cat simple-cat.dep
+simple-cat: gendep.h
+================
+== badexp.dep ==
+cat badexp.dep
+badexp: simple-cat.c/usr/include/stdio.h/usr/include/features.h\
+        /usr/include/sys/cdefs.h/usr/include/bits/wordsize.h\
+        /usr/include/gnu/stubs.h/usr/include/bits/wordsize.h\
+        /usr/include/gnu/stubs-64.h\
+        /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h\
+        /usr/include/bits/types.h/usr/include/bits/wordsize.h\
+        /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h\
+        /usr/include/bits/typesizes.h/usr/include/libio.h\
+        /usr/include/_G_config.h\
+        /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h\
+        /usr/include/wchar.h\
+        /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h\
+        /usr/include/bits/wchar.h/usr/include/gconv.h/usr/include/wchar.h\
+        /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h\
+        /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h\
+        /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stdarg.h\
+        /usr/include/bits/stdio_lim.h/usr/include/bits/sys_errlist.h\
+        gendep.h
+================
+
+in which you can see that the good regexp in the first example caused only relevant dependencies to be printed, whereas the second example ("badexp") showed how a bad regexp could lead to an excessive number of dependencies being recorded.
+
+
+NOTES:
+
+GENDEP_BINARY="cc1"
+	
+	means "snoop binaries called cc1".  This might be a regexp or regexpable.
+
+GENDEP_cc1='+\.h$$ -^/usr'
+
+	means "if you find yourself snooping a binary called cc1, then within that snoop only look at opened files whose names match this space-separated list of regexps".   You could have multiple such GENDEP_BLAH env-vars, one for every binary you plan to snoop.  NOTE THAT FOR EVERY GENDEP_BINARY="MOO" there must be a corresponding "GENDEP_MOO=......" or you will never snoop anything!
+
+GENDEP_TARGET='simple-cat'
+
+	means:
+
+	"when you write the .dep file, call it 'simple-cat.dep' and make it's first line 'simple-cat.h:'" (the second part of that sentence is guessed).
+
+---------------------------------------
+
+
+Note that only the first part of the "make test" command is supposed to work and make simple-cat.dep.  The second two parts are supposed to fail.  Target "blahblah" fails as there is no env-var corresp to GENDEP_BINARY.  Target "badexp" fails as the regexp is pooly formed.
+
+Chris
+
+http://www.hep.phy.cam.ac.uk/~lester/gendep/index.html
