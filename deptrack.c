@@ -48,8 +48,9 @@ write_word (char const * word)
       column = 8;
     }
 
-  column += l;
+  column += l+1;
   fputs (word, output);
+  fputs (" ", output);
 }
 
 void
@@ -228,7 +229,7 @@ static void initialize (void)
       output = fopen (fn, "w");
 
       write_word (target);
-      write_word (": ");
+      write_word (":");
     }
 }
 
