@@ -3,10 +3,10 @@
 # top-most EditorConfig file
 root = true
 
-[{*.c,*.h}]
+[*.{c,h}]
 indent_style = space
 indent_size = 2
 
 # Tab indentation (no size specified)
-[{makefile}]
+[Makefile]
 indent_style = tab

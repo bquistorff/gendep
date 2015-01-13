@@ -9,9 +9,8 @@ libgendep.so: $(OBJS)
 	gcc -shared -Wl,-soname,$@ -o $@ $^
 
 test-stata:
-	env GENDEP_TARGET='simple-stata' \
-		GENDEP_BINARY='stata-mp'\
-		'GENDEP_stata-mp=-^/usr' \
+	GENDEP_TARGET='simple-stata' \
+		GENDEP_FMATCH='-^/usr' \
 		LD_PRELOAD=$(shell pwd)/libgendep.so\
 		stata-mp -b do stata_test.do
 	rm stata_test.txt stata.est stata_internal_log.smcl stata_test.log stata_mata.dat Graph.gph auto_loc.dta Graph.eps
@@ -19,13 +18,11 @@ test-stata:
 
 test:
 	GENDEP_TARGET='simple-cat' \
-		GENDEP_BINARY=cc1\
-		GENDEP_cc1='+\.h$$ -^/usr' \
+		GENDEP_FMATCH='+\.h$$ -^/usr' \
 		LD_PRELOAD=$(shell pwd)/libgendep.so\
 		gcc -o simple-cat simple-cat.c
 	GENDEP_TARGET='badexp' \
-		GENDEP_BINARY=cc1\
-		GENDEP_cc1='\)foo'\
+		GENDEP_FMATCH='\)foo'\
 		LD_PRELOAD=$(shell pwd)/libgendep.so\
 		gcc -o simple-cat simple-cat.c
 	@echo ====================
