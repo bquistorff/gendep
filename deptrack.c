@@ -32,24 +32,6 @@ static char * target;
 
 #define STRLEN 1024
 
-/*
-  simplistic wordwrap
- */
-void
-write_word (char const * word)
-{
-  static int column;
-  int l = strlen (word);
-  if (l + column > 75){
-    fputs ("\\\n\t",output);
-    column = 8;
-  }
-
-  column += l+1;
-  fputs (word, output);
-  fputs (" ", output);
-}
-
 void
 xnomem(void *p)
 {
@@ -171,10 +153,16 @@ static void initialize (void){
     strncpy (fn, target, STRLEN);
     
     strncat (fn, ".dep", STRLEN);
-    output = fopen (fn, "w");
-
-    write_word (target);
-    write_word (":");
+    
+    /*Create and write the header if it doesn't exist*/
+    if (!(output = fopen(fn, "r"))){
+      output = fopen (fn, "w");
+      fputs (target, output);
+      fputs (" : ", output);
+    }
+    fclose(output);
+    
+    output = fopen (fn, "a");
   }
 }
 
@@ -193,7 +181,8 @@ gendep__register_open (char const *fn, int flags){
         return;
     }
 
-    write_word (fn);
+    fputs (fn, output);
+    fputs (" ", output);
   }
 }
 
@@ -201,8 +190,7 @@ static void finish (void) __attribute__ ((destructor));
 
 static void finish (void){
   if (output){
-      fprintf (output, "\n");
-      fclose (output);
-    }
+    fclose (output);
+  }
 }
 
