@@ -9,7 +9,6 @@ libgendep.so: $(OBJS)
 	gcc -shared -Wl,-soname,$@ -o $@ $^
 
 test-stata:
-	rm simple-stata.dep
 	env GENDEP_TARGET='simple-stata' \
 		GENDEP_BINARY='stata-mp'\
 		'GENDEP_stata-mp=-^/usr' \
