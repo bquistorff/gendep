@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "gendep.h"
+#include "foo.h"
 
 int main ()
 {

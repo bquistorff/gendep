@@ -1,0 +1,2 @@
+stata_test_tar : stata_test.do
+stata_internal_log.smcl stata_test.log stata_mata.dat Graph.gph auto_loc.dta stata_test.txt stata.est Graph.eps  : stata_test_tar

@@ -1,0 +1,2 @@
+simple-cat_tar : foo.h simple-cat.c
+simple-cat  : simple-cat_tar
