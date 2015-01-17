@@ -1,44 +1,30 @@
-VERSION=0.1-gcc4-fc6-lester
-CSRC = deptrack.c syscall.c
+# You can also set GENDEP_DEBUG to get debugging output.
+# Here are on/off commands
+# . export GENDEP_DEBUG=1
+# . unset GENDEP_DEBUG
 
-CFLAGS=-fPIC -Wall -pedantic -g
-DDIR=gendep-$(VERSION)
-OBJS= $(CSRC:.c=.o)
+export PATH := $(shell pwd)/trace:$(PATH)
 
-libgendep.so: $(OBJS)
-	gcc -shared -Wl,-soname,$@ -o $@ $^
+.PHONY: libgendep test-stata-preload test-stata-trace test-preload test-trace
 
-test-stata:
-	env GENDEP_TARGET='simple-stata' \
-		GENDEP_BINARY='stata-mp'\
-		'GENDEP_stata-mp=-^/usr' \
-		LD_PRELOAD=$(shell pwd)/libgendep.so\
-		stata-mp -b do stata_test.do
-	rm stata_test.txt stata.est stata_internal_log.smcl stata_test.log stata_mata.dat Graph.gph auto_loc.dta Graph.eps
-	cat simple-stata.dep
+libgendep:
+	cd preload && $(MAKE)
 
-test:
-	GENDEP_TARGET='simple-cat' \
-		GENDEP_BINARY=cc1\
-		GENDEP_cc1='+\.h$$ -^/usr' \
-		LD_PRELOAD=$(shell pwd)/libgendep.so\
-		gcc -o simple-cat simple-cat.c
-	GENDEP_TARGET='badexp' \
-		GENDEP_BINARY=cc1\
-		GENDEP_cc1='\)foo'\
-		LD_PRELOAD=$(shell pwd)/libgendep.so\
-		gcc -o simple-cat simple-cat.c
-	@echo ====================
-	@echo == simple-cat.dep ==
-	cat simple-cat.dep
-	@echo ================
-	@echo == badexp.dep ==
-	cat badexp.dep
-	@echo ================
+test-stata-preload:
+	cd tests && $(MAKE) test-stata-preload
+
+test-stata-trace:
+	cd tests && $(MAKE) test-stata-trace
+
+test-preload:
+	cd tests && $(MAKE) test-preload
+
+test-trace:
+	cd tests && $(MAKE) test-trace
 
 clean:
-	rm -f *.dep *.o simple-cat libgendep.so *~
-
+	cd preload && $(MAKE) clean
+	cd tests && $(MAKE) clean
 
 dist:
 	rm -rf $(DDIR)
