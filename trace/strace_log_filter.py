@@ -88,18 +88,14 @@ def main(argv):
 		if len(ever_write_files)>0:
 			for fname in ever_write_files:
 				fname_rel = os.path.relpath(fname)
-				if not fname.startswith(".."):
-					fname = fname_rel
-				dep_file.write(fname + ' ')
+				dep_file.write(fname_rel + ' ')
 			dep_file.write(' : ' + target + '\n')
 			
 		if len(init_read_files)>0:
 			dep_file.write(target + ' :')
 			for fname in init_read_files:
 				fname_rel = os.path.relpath(fname)
-				if not fname.startswith(".."):
-					fname = fname_rel
-				dep_file.write(' ' + fname)
+				dep_file.write(' ' + fname_rel)
 			dep_file.write('\n')
 
 if  __name__ =='__main__':
