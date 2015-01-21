@@ -15,7 +15,6 @@ test-stata-preload:
 
 test-stata-trace:
 	GENDEP_TARGET='stata_test_tar' \
-		GENDEP_FMATCH='gendep' \
 		dep_tracker.sh stata-mp -b do stata_test.do
 	cat stata_test_tar.dep
 	rm -f stata_test.txt stata.est stata_internal_log.smcl stata_test.log stata_mata.dat Graph.gph auto_loc.dta Graph.eps
@@ -30,7 +29,6 @@ test-preload:
 
 test-trace:
 	GENDEP_TARGET='simple-cat_tar' \
-		GENDEP_FMATCH='gendep' \
 		dep_tracker.sh gcc -o simple-cat simple-cat.c
 	cat simple-cat_tar.dep
 

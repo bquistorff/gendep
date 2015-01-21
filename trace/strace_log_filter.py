@@ -7,11 +7,15 @@ def error(message):
 	sys.exit(1)
 
 def main(argv):
-	if len(argv)!=(3+1):
-		error("usage: %s strace_log target regexp" % os.path.basename(argv[0]))
+	if len(argv)!=(2+1):
+		error("usage: %s strace_log target" % os.path.basename(argv[0]))
 	log_fname = argv[1]
 	target = argv[2]
-	fname_match = re.compile(argv[3])
+	#env_filter = os.environ['GENDEP_FMATCH'] #this also needs search() below, not match()
+	env_filter = os.getenv('GENDEP_PROJDIR', os.getcwd())
+	env_filter_abs = os.path.abspath(env_filter)
+	fname_filter = re.compile(env_filter_abs)
+	
 	
 	init_read_files = set()
 	ever_write_files = set()
@@ -66,7 +70,7 @@ def main(argv):
 						fn = os.path.abspath(fn)
 						if key in fd_fn_table:
 							del fd_fn_table[key]
-						if fname_match.search(fn) and mat.group(2).find("O_DIRECTORY")==-1:
+						if fname_filter.match(fn) and mat.group(2).find("O_DIRECTORY")==-1:
 							fd_fn_table[key] = fn
 				else:
 					print("Should've matched (open_parse): " +line)
