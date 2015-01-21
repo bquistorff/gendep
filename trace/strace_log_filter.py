@@ -19,10 +19,13 @@ def main(argv):
 	pid_strip_stderr  = re.compile("\[pid ([0-9]+)\]\s*(.+)", re.DOTALL)
 	pid_strip_outfile  = re.compile("([0-9]+)\s*(.+)", re.DOTALL)
 	pid_strip = pid_strip_outfile
-	open_parse = re.compile("open\(\"(.+)\", (.+)\)\s*=\s*(-?[0-9]+)\s*.*", re.DOTALL)
-	read_parse = re.compile("read\(([0-9]+), \".*\"\\.*, [0-9]+\)\s*=\s*([0-9]+)", re.DOTALL)
-	write_parse= re.compile("write\(([0-9]+), \".*\"\\.*, [0-9]+\)\s*=\s*([0-9]+)", re.DOTALL)
+	open_parse = re.compile("open\(\"(.+)\",\s+(.+)\)\s*=\s*(-?[0-9]+)\s*.*", re.DOTALL)
+	read_parse = re.compile("read\(([0-9]+),\s+\".*\"\\.*, [0-9]+\)\s*=\s*([0-9]+)", re.DOTALL)
+	write_parse= re.compile("write\(([0-9]+),\s+\".*\"\\.*, [0-9]+\)\s*=\s*([0-9]+)", re.DOTALL)
 	
+	unfinished_pt1 = re.compile("(open|read|write)(.+)<unfinished \.\.\.>$")
+	unfinished_pt2 = re.compile("<\.\.\. (open|read|write) resumed>(.+)")
+	unfinished_parts = {}
 	
 	fd_fn_table = {}
 	
@@ -34,19 +37,37 @@ def main(argv):
 				#child process
 				pid = mat.group(1)
 				line = mat.group(2)
+				
+			#Try to piece together partial lines
+			mat = unfinished_pt1.match(line)
+			if(mat):
+				op = mat.group(1)
+				key=pid + "-" + op
+				unfinished_parts[key] = op+mat.group(2)
+				continue
+			mat = unfinished_pt2.match(line)
+			if(mat):
+				op = mat.group(1)
+				key=pid + "-" + op
+				if key in unfinished_parts:
+					line = unfinished_parts[key]+mat.group(2)
+					del unfinished_parts[key]
+				else:
+					print("Resume line without unfinished line. key: " +key)
+					continue
 					
 			if line.startswith("open"):
 				mat = open_parse.match(line)
 				if(mat):
 					fd = int(mat.group(3))
 					if(fd>=0):
-						fd = pid + "-" + str(fd)
+						key = pid + "-" + str(fd)
 						fn = mat.group(1)
 						fn = os.path.abspath(fn)
-						if fd in fd_fn_table:
-							del fd_fn_table[fd]
+						if key in fd_fn_table:
+							del fd_fn_table[key]
 						if fname_match.search(fn) and mat.group(2).find("O_DIRECTORY")==-1:
-							fd_fn_table[fd] = fn
+							fd_fn_table[key] = fn
 				else:
 					print("Should've matched (open_parse): " +line)
 				continue
@@ -54,10 +75,11 @@ def main(argv):
 			if line.startswith("read"):
 				mat = read_parse.match(line)
 				if(mat):
-					fd = pid + "-" + mat.group(1)
+					fd = mat.group(1)
+					key = pid + "-" + fd
 					ret = int(mat.group(2))
-					if fd in fd_fn_table:
-						fn = fd_fn_table[fd]
+					if key in fd_fn_table:
+						fn = fd_fn_table[key]
 						if((fn not in init_read_files) and (fn not in ever_write_files) and ret>0):
 							init_read_files.add(fn)
 				else:
@@ -67,10 +89,11 @@ def main(argv):
 			if line.startswith("write"):
 				mat = write_parse.match(line)
 				if(mat):
-					fd = pid + "-" + mat.group(1)
-					if fd in fd_fn_table:
+					fd = mat.group(1)
+					key = pid + "-" + fd
+					if key in fd_fn_table:
 						ret = int(mat.group(2))
-						fn = fd_fn_table[fd]
+						fn = fd_fn_table[key]
 						if (fn not in ever_write_files) and ret>0:
 							ever_write_files.add(fn)
 				else:
