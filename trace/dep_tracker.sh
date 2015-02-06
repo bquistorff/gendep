@@ -6,7 +6,5 @@ if [ $? -eq 0 ]; then
 	strace_log_filter.py $GENDEP_TARGET.trace $GENDEP_TARGET
 	if [ "$GENDEP_DEBUG" != "1" ]; then
 		rm $GENDEP_TARGET.trace
-	else
-		cp $GENDEP_TARGET.dep $GENDEP_TARGET.bak.dep
 	fi
 fi
