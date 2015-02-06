@@ -28,8 +28,8 @@ def main(argv):
 	write_parse= re.compile("write\(([0-9]+),\s+\".*\"\\.*, [0-9]+\)\s*=\s*([0-9]+)", re.DOTALL)
 	dup_parse= re.compile("dup[23]?\(([0-9]+)[^\)]*\)\s*=\s*([0-9]+)", re.DOTALL)
 	
-	unfinished_pt1 = re.compile("(open|read|write)(.+)<unfinished \.\.\.>$")
-	unfinished_pt2 = re.compile("<\.\.\. (open|read|write) resumed>(.+)")
+	unfinished_pt1 = re.compile("(open|read|write|dup[0-9]?)(.+)<unfinished \.\.\.>$")
+	unfinished_pt2 = re.compile("<\.\.\. (open|read|write|dup[0-9]?) resumed>(.+)")
 	unfinished_parts = {}
 	
 	fd_fn_table = {}
