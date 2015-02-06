@@ -26,6 +26,7 @@ def main(argv):
 	open_parse = re.compile("open\(\"(.+)\",\s+(.+)\)\s*=\s*(-?[0-9]+)\s*.*", re.DOTALL)
 	read_parse = re.compile("read\(([0-9]+),\s+\".*\"\\.*, [0-9]+\)\s*=\s*([0-9]+)", re.DOTALL)
 	write_parse= re.compile("write\(([0-9]+),\s+\".*\"\\.*, [0-9]+\)\s*=\s*([0-9]+)", re.DOTALL)
+	dup_parse= re.compile("dup[23]?\(([0-9]+)[^\)]*\)\s*=\s*([0-9]+)", re.DOTALL)
 	
 	unfinished_pt1 = re.compile("(open|read|write)(.+)<unfinished \.\.\.>$")
 	unfinished_pt2 = re.compile("<\.\.\. (open|read|write) resumed>(.+)")
@@ -60,7 +61,7 @@ def main(argv):
 					print("Resume line without unfinished line. key: " +key)
 					continue
 					
-			if line.startswith("open"):
+			if line.startswith("open("):
 				mat = open_parse.match(line)
 				if(mat):
 					fd = int(mat.group(3))
@@ -76,7 +77,7 @@ def main(argv):
 					print("Should've matched (open_parse): " +line)
 				continue
 					
-			if line.startswith("read"):
+			if line.startswith("read("):
 				mat = read_parse.match(line)
 				if(mat):
 					fd = mat.group(1)
@@ -90,7 +91,7 @@ def main(argv):
 					print("Should've matched (read_parse): " +line)
 				continue
 					
-			if line.startswith("write"):
+			if line.startswith("write("):
 				mat = write_parse.match(line)
 				if(mat):
 					fd = mat.group(1)
@@ -102,6 +103,23 @@ def main(argv):
 							ever_write_files.append(fn)
 				else:
 					print("Should've matched (write_parse): " +line)
+				continue
+				
+			if line.startswith("dup"):
+				mat = dup_parse.match(line)
+				if(mat):
+					new_fd = int(mat.group(2))
+					if(new_fd>=0):
+						old_fd = int(mat.group(1))
+						old_key = pid + "-" + str(old_fd)
+						if old_key in fd_fn_table:
+							fn = fd_fn_table[old_key]
+							new_key = pid + "-" + str(new_fd)
+							if new_key in fd_fn_table:
+								del fd_fn_table[new_key]
+							fd_fn_table[new_key] = fn
+				else:
+					print("Should've matched (dup_parse): " +line)
 				continue
 				
 			#print("Unused logline: " + line)
