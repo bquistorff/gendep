@@ -16,9 +16,9 @@ def main(argv):
 	env_filter_abs = os.path.abspath(env_filter)
 	fname_filter = re.compile(env_filter_abs)
 	
-	
-	init_read_files = set()
-	ever_write_files = set()
+	# Use list instead of set to get consistent ordering
+	init_read_files = []
+	ever_write_files = []
 	
 	pid_strip_stderr  = re.compile("\[pid ([0-9]+)\]\s*(.+)", re.DOTALL)
 	pid_strip_outfile  = re.compile("([0-9]+)\s*(.+)", re.DOTALL)
@@ -85,7 +85,7 @@ def main(argv):
 					if key in fd_fn_table:
 						fn = fd_fn_table[key]
 						if((fn not in init_read_files) and (fn not in ever_write_files) and ret>0):
-							init_read_files.add(fn)
+							init_read_files.append(fn)
 				else:
 					print("Should've matched (read_parse): " +line)
 				continue
@@ -99,14 +99,14 @@ def main(argv):
 						ret = int(mat.group(2))
 						fn = fd_fn_table[key]
 						if (fn not in ever_write_files) and ret>0:
-							ever_write_files.add(fn)
+							ever_write_files.append(fn)
 				else:
 					print("Should've matched (write_parse): " +line)
 				continue
 				
 			#print("Unused logline: " + line)
 	
-	#remove if the files ultimately were deleted. Sets become lists
+	#remove if the files ultimately were deleted.
 	init_read_files = [fname for fname in init_read_files if os.path.isfile(fname)]
 	ever_write_files = [fname for fname in ever_write_files if os.path.isfile(fname)]
 	
