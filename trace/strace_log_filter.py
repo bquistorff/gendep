@@ -9,6 +9,8 @@ def error(message):
 def main(argv):
 	if len(argv)!=(2+1):
 		error("usage: %s strace_log target" % os.path.basename(argv[0]))
+	
+	remove_deleted_files=1
 	log_fname = argv[1]
 	target = argv[2]
 	#env_filter = os.environ['GENDEP_FMATCH'] #this also needs search() below, not match()
@@ -124,9 +126,9 @@ def main(argv):
 				
 			#print("Unused logline: " + line)
 	
-	#remove if the files ultimately were deleted.
-	init_read_files = [fname for fname in init_read_files if os.path.isfile(fname)]
-	ever_write_files = [fname for fname in ever_write_files if os.path.isfile(fname)]
+	if remove_deleted_files:
+		init_read_files = [fname for fname in init_read_files if os.path.isfile(fname)]
+		ever_write_files = [fname for fname in ever_write_files if os.path.isfile(fname)]
 	
 	#Output the information
 	with open(target + ".dep", "w") as dep_file:
