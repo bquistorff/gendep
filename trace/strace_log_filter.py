@@ -8,11 +8,11 @@ def error(message):
 
 def main(argv):
 	if len(argv)!=(2+1):
-		error("usage: %s strace_log target" % os.path.basename(argv[0]))
+		error("usage: %s strace_log dep_file" % os.path.basename(argv[0]))
 	
 	remove_deleted_files=1
 	log_fname = argv[1]
-	target = argv[2]
+	dep_file = argv[2]
 	#env_filter = os.environ['GENDEP_FMATCH'] #this also needs search() below, not match()
 	env_filter = os.getenv('GENDEP_PROJDIR', os.getcwd())
 	env_filter_abs = os.path.abspath(env_filter)
@@ -131,19 +131,18 @@ def main(argv):
 		ever_write_files = [fname for fname in ever_write_files if os.path.isfile(fname)]
 	
 	#Output the information
-	with open(target + ".dep", "w") as dep_file:
-		if len(ever_write_files)>0:
-			for fname in ever_write_files:
-				fname_rel = os.path.relpath(fname)
-				dep_file.write(fname_rel + ' ')
-			dep_file.write(' : ' + target + '\n')
+	with open(dep_file, "w") as dep_file:
+		for fname in ever_write_files:
+			fname_rel = os.path.relpath(fname)
+			dep_file.write(fname_rel + ' ')
+		
+		dep_file.write(' : ')
 			
-		if len(init_read_files)>0:
-			dep_file.write(target + ' :')
-			for fname in init_read_files:
-				fname_rel = os.path.relpath(fname)
-				dep_file.write(' ' + fname_rel)
-			dep_file.write('\n')
+		for fname in init_read_files:
+			fname_rel = os.path.relpath(fname)
+			dep_file.write(' ' + fname_rel)
+		
+		dep_file.write('\n')
 
 if  __name__ =='__main__':
 	main(sys.argv)
